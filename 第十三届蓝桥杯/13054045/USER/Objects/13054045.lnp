@@ -1,0 +1,10 @@
+".\Objects\main.obj",
+".\Objects\led.obj",
+".\Objects\smg.obj",
+".\Objects\timer.obj",
+".\Objects\key.obj",
+".\Objects\ds1302.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\13054045" 
+PRINT(".\Listings\13054045.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 

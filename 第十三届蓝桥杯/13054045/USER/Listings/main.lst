@@ -1,0 +1,159 @@
+C51 COMPILER V9.57.0.0   MAIN                                                              04/09/2022 12:02:40 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\APP;..\LIB;..\USER) DEBUG OBJE
+                    -CTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "headfile.h"
+   2          //L3闪烁还是有点问题
+   3          extern bit func_flag;
+   4          extern uchar key_num;
+   5          extern uchar key_num2;
+   6          extern uchar hour,min,sec;
+   7          uint temp = 0;//三位数 23.4 234
+   8          
+   9          uchar jm = 1;//3种界面 1-温度 2-时间 3-参数
+  10          uchar mode = 1;//2种工作模式 1-温度控制 2-时间控制
+  11          uint wendu_can = 230;//23度
+  12          uchar hour10=0,min10=0,sec10=0;//十进制
+  13          
+  14          bit jidian_flag1 = 0;
+  15          extern bit L1_mode;
+  16          bit led3_flag = 0;//L3 0.1秒闪烁标志位
+  17          extern bit led3_mode;
+  18          
+  19          
+  20          void main()
+  21          {
+  22   1        all_init();
+  23   1        timer1_init();
+  24   1        timer0_init();
+  25   1        ds1302_init(0x23,0x59,0x50);//上电为23时25分
+  26   1        while(1)
+  27   1        {
+  28   2          if(func_flag == 1){
+  29   3            key_scanf();
+  30   3            ds1302_read();
+  31   3            temp = temp_read();
+  32   3            
+  33   3            func_flag = 0;
+  34   3          }
+  35   2          
+  36   2          if(P0==0x10){
+  37   3            led3_flag = 1;
+  38   3          }
+  39   2          else if(P0!=0x10){
+  40   3            led3_flag = 0;
+  41   3          }
+  42   2          if(led3_mode == 1){led_light(3);}
+  43   2          else if(led3_mode == 0){led_unlight(3);}
+  44   2      
+  45   2          
+  46   2          hour10 = hour/16*10+hour%16;
+  47   2          min10 = min/16*10+min%16;
+  48   2          sec10 = sec/16*10+sec%16; 
+  49   2          
+  50   2          if(key_num == 12){//界面控制
+  51   3            key_num = 0;
+  52   3            jm++;
+  53   3            if(jm>3)jm=1;
+  54   3          }
+C51 COMPILER V9.57.0.0   MAIN                                                              04/09/2022 12:02:40 PAGE 2   
+
+  55   2          if(key_num == 13){//模式控制
+  56   3            key_num = 0;
+  57   3            if(mode == 1) mode = 2;
+  58   3            else if(mode == 2) mode = 1;
+  59   3          }
+  60   2        ///======界面===========
+  61   2          if(jm == 1){//温度显示
+  62   3            smg_d(25,1,16,16,16,temp/100,temp%100/10+32,temp%10);
+  63   3          }
+  64   2          if(jm == 2){//时间显示
+  65   3            smg_d(25,2,16,hour/16,hour%16,17,min/16,min%16);
+  66   3            if(key_num2 == 17){
+  67   4              smg_d(25,2,16,min/16,min%16,17,sec/16,sec%16);
+  68   4            }
+  69   3          }
+  70   2          if(jm == 3){//参数设置
+  71   3            if(key_num == 16){//温度加1
+  72   4              key_num = 0;
+  73   4              wendu_can+=10;
+  74   4              if(wendu_can>990){
+  75   5                wendu_can = 100;
+  76   5              }
+  77   4            }
+  78   3            if(key_num == 17){//温度减1
+  79   4              key_num = 0;
+  80   4              wendu_can-=10;
+  81   4              if(wendu_can<100){
+  82   5                wendu_can = 990;
+  83   5              }
+  84   4            }
+  85   3            smg_d(25,3,16,16,16,16,wendu_can/100,wendu_can%100/10);
+  86   3          }
+  87   2        //===========
+  88   2          
+  89   2          //==控制
+  90   2          if(mode == 1){//温度控制
+  91   3      //      Y5;P0=0x00;Y0;///
+  92   3            if(temp>wendu_can){
+  93   4              Y5;
+  94   4              P0 = 0x10;
+  95   4              Y0;
+  96   4            }
+  97   3            else {
+  98   4              Y5;
+  99   4              P0 = 0x00;
+ 100   4              Y0;
+ 101   4            }
+ 102   3          }
+ 103   2          if(mode == 2){//时间显示
+ 104   3      //      Y5;P0=0x00;Y0;///
+ 105   3            if((min10==0) && (sec10==0)){//整点
+ 106   4              jidian_flag1 = 1;//整点继电器吸合5秒后断开
+ 107   4            }
+ 108   3            if(L1_mode==1){Y5;P0=0x10;Y0;led_light(1);}
+ 109   3            if(L1_mode==0){Y5;P0=0x00;Y0;led_unlight(1);}   
+ 110   3          }
+ 111   2          //====L2====
+ 112   2          if(mode == 1){
+ 113   3            led_light(2);
+ 114   3          }
+ 115   2          else {
+ 116   3            led_unlight(2);
+C51 COMPILER V9.57.0.0   MAIN                                                              04/09/2022 12:02:40 PAGE 3   
+
+ 117   3          }
+ 118   2          //======L3===
+ 119   2      //    if(P0==0x10){
+ 120   2      //      led3_flag = 1;
+ 121   2      //    }
+ 122   2      //    if(P0!=0x10){
+ 123   2      //      led3_flag = 0;
+ 124   2      //    }
+ 125   2          
+ 126   2      //    if(led3_mode == 1){led_light(3);}
+ 127   2      //    if(led3_mode == 0){led_unlight(3);}
+ 128   2      
+ 129   2          
+ 130   2        }
+ 131   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    674    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
